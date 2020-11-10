@@ -1,0 +1,56 @@
+apiVersion: autoscaling.ocgi.dev/v1alpha1
+kind: GeneralPodAutoscaler
+metadata:
+  name: pa-test1 # GPA name
+spec:
+  # maxReplicas is the upper limit for the number of replicas to which the autoscaler can scale up.
+  # It cannot be less that minReplicas.
+  maxReplicas: 8
+  # minReplicas is the lower limit for the number of replicas to which the autoscaler can scale down.  
+  minReplicas: 2
+  # scaleTargetRef points to the target resource to scale, and is used to the pods for which metrics
+  # should be collected, as well as to actually change the replica count.
+  scaleTargetRef:
+    apiVersion: carrier.ocgi.dev/v1alpha1
+    kind: Squad
+    name: squad-example
+  # time defines the time driven mode, pod would auto scale to max if time reached
+  time:
+    # ranges defines a array that for time driven mode
+    ranges:
+    # desiredReplicas is the desired replicas required by timemode
+    - desiredReplicas: 4
+      # schedule should match crontab format
+      schedule: '*/1 2-3 * * *'
+    - desiredReplicas: 6
+      schedule: '*/1 4-5 * * *'
+  # webhook define a webhook which privide by application
+  webhook:
+    # parameters are the webhook parameters defined by application
+    parameters:
+      buffer: "2"
+    # webhook configuration
+    # https://v1-17.docs.kubernetes.io/docs/reference/generated/kubernetes-api/v1.17/#webhookclientconfig-v1beta1-admissionregistration-k8s-io
+    service:
+      name: gpa-webhook
+      namespace: kube-system
+      path: scale
+      port: 8000
+  # metric specifies how to scale based on metrics
+  metric:
+    # metrics contains the specifications for which to use to calculate the desired replica count
+    # https://v1-17.docs.kubernetes.io/docs/reference/generated/kubernetes-api/v1.17/#metricspec-v2beta1-autoscaling
+    metrics:
+    - resource:
+        name: cpu
+        target:
+          averageValue: 20
+          type: AverageValue
+      type: Resource
+    - resource:
+        name: memory
+        target:
+          averageValue: 50m
+          type: AverageValue
+      type: Resource
+  

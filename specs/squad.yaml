@@ -1,0 +1,45 @@
+apiVersion: carrier.ocgi.dev/v1alpha1
+kind: Squad
+metadata:
+  name: squad-example # Squad name
+  namespace: default # K8s namespace
+spec:
+  # GameServer replica number
+  replicas: 2
+  # Update strategy
+  strategy:
+    # Strategy type. Can be `ReCreate`, `RollingUpdate`, `CanaryUpdate` or `InplaceUpdate`. Default is `RollingUpdate`
+    type: RollingUpdate
+    # Rolling update config params. Present only if SquadStrategyType = RollingUpdate.
+    rollingUpdate:
+      # The maximum number of GameServers that can be scheduled above the original number of GameServer.
+      maxSurge: 1
+      # The maximum number of GameServers that can be unavailable during the update.
+      maxUnavailable: 1
+  # GameServer scheduling strategy. Can be "LeastAllocated" or "MostAllocated". Defaults to "MostAllocated". 
+  scheduling: MostAllocated
+  # The number of old GameServerSets to retain to allow rollback.
+  # his is a pointer to distinguish between explicit zero and not specified.  
+  revisionHistoryLimit: 10
+  # ExcludeConstraints describes if we should exclude GameServer with constraints when computing replicas, default `false`.
+  excludeConstraints: false
+  # Selector is a label query over pods that should match the replica count.
+  selector:
+    matchLabels:
+      carrier.ocgi.dev/squad: squad-example
+  # GameServer template configuration
+  template:
+    metadata:
+      labels:
+        foo: bar
+    spec:
+      ports:
+      - container: server
+        containerPort: 7654
+        name: default
+        protocol: TCP
+      template:
+        spec:
+          containers:
+          - image: ocgi/simple-tcp:0.1
+            name: server

@@ -1,0 +1,76 @@
+apiVersion: carrier.ocgi.dev/v1alpha1
+kind: GameServer
+metadata:
+  name: ds-serverv1 # game server name
+  namespace: default # K8s namespace
+spec:
+  # Scheduling strategy. Can be "LeastAllocated" or "MostAllocated". Defaults to "MostAllocated"
+  scheduling: MostAllocated
+  # Array of ports that can be exposed as direct connections to the game server container
+  ports:
+    # name is the descriptive name of the port
+  - name: default
+    # PortPolicy defines the policy for how the HostPort is populated.
+    # - "Dynamic", port will allocate a HostPort within the selected MIN_PORT and MAX_PORT range passed to the controller at installation time.
+    # - "Static", user defines the hostPort to be used in the configuration
+    # - "LoaderBalancer", use the port allocated from external load balacner
+    #   When `Static` portPolicy is specified, `HostPort` or `HostPortRange` is required, to specify the port that game clients will connect to.
+    portPolicy: Static
+    #  the port that is being opened on the specified container's process
+    containerPort: 7654
+    # the port range that is being opened on the specified container's process. Can not be set with `containerPort` at the same time.
+    containerPortRange:
+      # the start of the range, inclusive
+      minPort: 10000
+      # the end of the range, inclusive
+      maxPort: 20000
+    # the port exposed on the host for clients to connect to
+    hostPort: 10000
+    # is the port range that exposed on the host for clients to connect to
+    hostPortRange:
+      # the start of the range, inclusive
+      minPort: 30000
+      # the end of the range, inclusive
+      maxPort: 40000
+    # protocol being used. Defaults to UDP. TCP and TCPUDP are other options
+    # - "UDP" (default) use the UDP protocol
+    # - "TCP", use the TCP protocol
+    # - "TCPUDP", uses both TCP and UDP, and exposes the same hostPort for both protocols
+    protocol: UDP
+  # Constraints describes the constraints of game server.
+  # This filed may be added or changed by controller or manually.
+  # If anyone of them is `NotInService` and Effective is `true`,
+  # game server container should not continue serving and should set all condition of `deletableGates` true
+  # when it has closed the connection to players.
+  constraints:
+  - type: NotInService # NotInService mark the game server should close the connection when scaling-down
+    # `true` or `false`
+    effective: true
+    # Destription message about the constraint
+    message: "Carrier controller mark this game server as not in service"
+    # Constraints added timestamp
+    timeAdded: "2021-05-21T09:53:32Z"
+  # If specified, all readiness gates will be evaluated for game server readiness.
+  # A game server is ready when all its pod are ready AND
+  # all conditions specified in the readiness gates have status equal to "True"
+  readinessGates:
+  # User-defined or OCGI controller-defined
+  - network.ocgi.dev/lb-ready
+  # If specified, all deletable gates will be evaluated for game server deletable.
+  # A game server is deletable when all its pod are deletable AND
+  # all conditions specified in the deletable gates have status equal to "True"
+  deletableGates:
+  # User-defined or OCGI controller-defined
+  - carrier.ocgi.dev/has-no-player
+  # Pod template configuration
+  # https://v1-17.docs.kubernetes.io/docs/reference/generated/kubernetes-api/v1.17/#podtemplate-v1-core
+  template:
+    spec:
+      containers:
+      - image: ocgi/simple-tcp:0.1
+        imagePullPolicy: Always
+        name: server
+        resources:
+          limits:
+            cpu: 20m
+            memory: 32Mi
