@@ -4,7 +4,7 @@ metadata:
   name: ds-serverv1 # game server name
   namespace: default # K8s namespace
 spec:
-  # Scheduling strategy. Can be "LeastAllocated" or "MostAllocated". Defaults to "MostAllocated"
+  # Scheduling strategy. Can be "LeastAllocated", "MostAllocated" or "Default". Defaults to "MostAllocated"
   scheduling: MostAllocated
   # Array of ports that can be exposed as direct connections to the game server container
   ports:

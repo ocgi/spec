@@ -16,7 +16,7 @@ spec:
       maxSurge: 1
       # The maximum number of GameServers that can be unavailable during the update.
       maxUnavailable: 1
-  # GameServer scheduling strategy. Can be "LeastAllocated" or "MostAllocated". Defaults to "MostAllocated". 
+  # GameServer scheduling strategy. Can be "LeastAllocated", "MostAllocated" or "Default". Defaults to "MostAllocated". 
   scheduling: MostAllocated
   # The number of old GameServerSets to retain to allow rollback.
   # his is a pointer to distinguish between explicit zero and not specified.  
